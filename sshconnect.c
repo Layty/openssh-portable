@@ -426,6 +426,7 @@ ssh_create_socket(struct addrinfo *ai)
 		    ssh_gai_strerror(r));
 		goto fail;
 	}
+	((struct sockaddr_in*)&bindaddr)->sin_port= htons(options.bind_port);
 	if (bind(sock, (struct sockaddr *)&bindaddr, bindaddrlen) != 0) {
 		error("bind %s: %s", ntop, strerror(errno));
 		goto fail;

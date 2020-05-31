@@ -1,3 +1,61 @@
+# 修改ssh客户端的端口
+
+## 你懂得
+
+可能因为某些原因,你必须指定客户端端口,但是`ssh`的`-b`选项只能指定绑定的地址,不能绑定端口,所以这里我们需要更改源代码
+
+## 修改
+
+1. 下载 [openssh](https://github.com/openssh/openssh-portable)我这次试用了版本 `openssh-portable-V_8_3_P1`
+
+2. 找到`ssh.c`的`main`函数,可以找到`-b`选项,搜索`case '-b'`
+
+3. 由此我们找到结构体`options`的定义,增加端口的定义`int  options.bind_port`
+
+4. 修改`ssh.c@main`
+
+    ```c
+    char myaddress[100]={};
+    .....
+        case 'b':
+            sscanf(optarg,"%[^:]:%d",myaddress,&options.bind_port);			
+            options.bind_address = myaddress;
+            break;
+    ```
+
+5. 修改`sshconnect.c @430`  
+
+    ```c
+        ((struct sockaddr_in*)&bindaddr)->sin_port= htons(options.bind_port);
+        if (bind(sock, (struct sockaddr *)&bindaddr, bindaddrlen) != 0) {
+            error("bind %s: %s", ntop, strerror(errno));
+            goto fail;
+        }
+    ```
+    
+6. 编译
+
+    ```
+    autoreconf && ./configure && make 
+    ```
+
+7. 软链接一个`ln -s .ssh  .myssh`
+
+8. 运行
+    ```
+    ./myssh  -b 192.168.1.153:5566  root@xxx.xyz
+    ```
+7. 然后再打开一个终端查看试用的端口
+    ```
+    vmuser@ubuntu:~$ lsof | grep "myssh.*TCP"
+    myssh     110179                 vmuser    3u     IPv4            4018314      0t0        TCP ubuntu:5566->myother_ubuntu:ssh (ESTABLISHED)
+```
+
+
+
+
+
+
 See https://www.openssh.com/releasenotes.html#8.3p1 for the release notes.
 
 Please read https://www.openssh.com/report.html for bug reporting

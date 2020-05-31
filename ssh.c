@@ -642,6 +642,7 @@ set_addrinfo_port(struct addrinfo *addrs, int port)
 int
 main(int ac, char **av)
 {
+	char myaddress[100];
 	struct ssh *ssh = NULL;
 	int i, r, opt, exit_status, use_syslog, direct, timeout_ms;
 	int was_addr, config_test = 0, opt_terminated = 0, want_final_pass = 0;
@@ -1055,7 +1056,9 @@ main(int ac, char **av)
 			options.control_path = xstrdup(optarg);
 			break;
 		case 'b':
-			options.bind_address = optarg;
+			sscanf(optarg,"%[^:]:%d",myaddress,&options.bind_port);			
+			options.bind_address = myaddress;
+			break;
 			break;
 		case 'B':
 			options.bind_interface = optarg;
